@@ -13,6 +13,7 @@ account is sufficient. Once you have your keys, you will need to create a Python
 file will need to have the code:
 
 ebirdkey = {your key for Cornell Ebird 2.0}
+
 liqkey = {your key for Location IQ API}
 
 Put secrets.py in the same directory as 507FINAL.py and states.json.
