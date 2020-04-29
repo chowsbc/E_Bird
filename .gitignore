@@ -1,0 +1,10 @@
+__pycache__
+bird.sqlite
+bird_cache.json
+linegraph.html
+locationchart.html
+pirivatepublicchart.html
+secrets.py
+states_cache.json
+taxonomychart.html
+.idea
