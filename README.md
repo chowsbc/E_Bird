@@ -1,5 +1,3 @@
-To see this app in action right now, see the demo video: https://drive.google.com/file/d/1lwv_Kn8UtgDEAtTLdn9unsso43cnoexH/view?usp=sharing
-
 SPECIAL REQUIREMENTS
 The main file you will interact with is 507FINAL.py. To use this file, you will need:
 
