@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 import datetime
 import webbrowser
 
-'''COMMENT'''
 
 CACHE_FILE_NAME = "bird_cache.json"
 DB_NAME = 'bird.sqlite'
