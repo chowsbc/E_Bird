@@ -64,7 +64,7 @@ def save_cache(cache):
     cache_file.close()
 
 
-def make_url_request_using_cache(url, cache):
+def make_url_request_using_cache(url, cache, header = None):
     ''' Uses a url to search the cache dictionary or alternatively, the internet, for html content. Saves the content.
 
         Looks for a key-value pair in the cache dictionary with a key that is identical to a url. If such a key-value
@@ -89,8 +89,26 @@ def make_url_request_using_cache(url, cache):
         print("\nUsing cache")
         return cache[url]
 
+
+    elif header != None:
+        print("\nFetching Birds")
+        response = requests.get(url, headers = header)
+        '''
+        print(response)
+        print (url)
+        print (header)
+        '''
+        cache[url] = response.text
+        '''
+        print (cache[url])
+        '''
+        save_cache(cache)
+
+        return cache[url]   
+          
+
     else:
-        print("\nFetching")
+        print("\nFetching Locations")
         response = requests.get(url)
         cache[url] = response.text
         save_cache(cache)
@@ -228,9 +246,11 @@ def populate_counties_DB(state_short, birdkey=secrets.ebirdkey):
 
         '''
 
+    print(birdkey)
     state_code = 'US-' + state_short
-    url1 = 'https://api.ebird.org/v2/ref/region/list/subnational2/' + state_code + '?key=' + birdkey
-    area_list = make_url_request_using_cache(url1, CACHE_DICT)
+    url1 = 'https://api.ebird.org/v2/ref/region/list/subnational2/' + state_code
+    header = {"X-eBirdApiToken": birdkey}
+    area_list = make_url_request_using_cache(url1, CACHE_DICT, header)
     sample_area_json = json.loads(area_list)
     count = 0
     for item in sample_area_json:
@@ -249,7 +269,7 @@ def populate_counties_DB(state_short, birdkey=secrets.ebirdkey):
     conn.close()
     pass
 
-def populate_sightings_DB(county_choice, state_short, birdkey=secrets.ebirdkey):
+def populate_sightings_DB(county_choice, state_short, birdkey= secrets.ebirdkey):
     '''Retrieves a county code and county name from bird.sqilte and uses the code to query sightings info and add it to bird.sqlite.
 
     Uses county_choice and state_short (a state abbreviation) to assemble a query to the sqlite database specified by
@@ -276,15 +296,18 @@ def populate_sightings_DB(county_choice, state_short, birdkey=secrets.ebirdkey):
     county_name: string
         The name of the county retrieved from the sqlite query.
         '''
+    print(birdkey)
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     result = cur.execute(
         "select Location_Code, County from counties where state_count = " + county_choice + " and Location_Code like '%" + state_short + "%';").fetchall()
     county_code = result[0][0]
     county_name = result[0][1]
-    url = 'https://api.ebird.org/v2/data/obs/' + county_code + '/recent' + '?key=' + birdkey
-    print('\nFetching\n')
-    response = requests.get(url)
+    url = 'https://api.ebird.org/v2/data/obs/' + county_code + '/recent'
+    header = {"X-eBirdApiToken": birdkey}
+    print('\nFetching County\n')
+    print (url)
+    response = requests.get(url, headers = header)
     response_text = response.text
     sightings_json = json.loads(response_text)
 
@@ -316,6 +339,7 @@ def populate_sightings_DB(county_choice, state_short, birdkey=secrets.ebirdkey):
         pass
     conn.commit()
     conn.close()
+    print (county_name)
     return county_name
 
 def create_county_list(state_short, state_name):
@@ -499,16 +523,25 @@ def create_locations_chart(county_name):
         'SELECT Location_Name, Lat, Long, PrivateLocation, COUNT(Location_Name) FROM sightings WHERE County_Name = "' + county_name + '" GROUP BY Location_Name ORDER BY Count(Location_Name) DESC LIMIT 5').fetchall()
     x_axis = []
     y_axis = []
+
+    print(result)    
+
+    
     for location in result:
         x_axis.append(int(location[4]))
         y_string = location[0] + '  |  ' + 'lat: ' + str(location[1]) + ' / ' + 'long: ' + str(location[2] + '    ')
         y_axis.append(y_string)
+ 
+    
     basic_layout = go.Layout(title="Recent Bird Sightings in " + county_name + " County")
     fig = go.Figure(go.Bar(x=x_axis, y=y_axis, orientation='h'), layout=basic_layout)
     fig.write_html("locationchart.html", auto_open=True)
+    
 
     conn.close()
     return result
+    
+
 
 def create_sightings_scatterplot(county_name):
     '''Queries bird.sqlite for dates of recent sightings in a particular county and creates a scatter plot.
@@ -550,10 +583,11 @@ def create_sightings_scatterplot(county_name):
         y_axis_list.append(date_count)
         date_parts = date.split('-')
         x_axis_list.append(datetime.datetime(year=int(date_parts[0]), month=int(date_parts[1]), day=int(date_parts[2])))
-
+    
     basic_layout = go.Layout(title="Recent Bird Sightings in " + county_name + " County")
     fig = go.Figure(data=[go.Scatter(x=x_axis_list, y=y_axis_list)], layout=basic_layout)
     fig.write_html("linegraph.html", auto_open=True)
+    
     pass
 
 def create_private_pie(county_name):
@@ -581,11 +615,12 @@ def create_private_pie(county_name):
     labels = ['Private Property', 'Public Property']
     values = [Private_Count[0][0], Public_Count[0][0]]
 
-
+    
     basic_layout = go.Layout(title="Proportions of Sightings in Public and Private Property in " + county_name)
     fig = go.Figure(data=[go.Pie(labels=labels, values=values)], layout = basic_layout)
     fig.write_html("pirivatepublicchart.html", auto_open=True)
-
+    
+    
 def create_taxonomy_table(species_page_data, address):
     '''Parses data from species_page_data and uses it to create a table presenting the data. Also displays address data in the table.
 
@@ -664,7 +699,7 @@ if __name__ == "__main__":
                         exit()
                     else:
                         pass
-
+            print (state_short)
             populate_counties_DB(state_short)
             county_max = create_county_list(state_short, state)
             county_choice = input('\nSelect the integer of the county you would like to query, or "exit": ')
@@ -672,6 +707,7 @@ if __name__ == "__main__":
             county_name = populate_sightings_DB(county_choice, state_short)
             sighting_max = create_sightings_list(county_name)
             if sighting_max > 0:
+                print (county_name)
                 create_locations_chart(county_name)
                 create_sightings_scatterplot(county_name)
                 create_private_pie(county_name)
