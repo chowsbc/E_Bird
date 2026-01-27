@@ -1,7 +1,7 @@
 import requests
 import json
 import sqlite3
-import secrets
+import secrets_1
 from bs4 import BeautifulSoup
 import plotly.graph_objects as go
 import datetime
@@ -91,24 +91,16 @@ def make_url_request_using_cache(url, cache, header = None):
 
 
     elif header != None:
-        print("\nFetching Birds")
-        response = requests.get(url, headers = header)
-        '''
-        print(response)
-        print (url)
-        print (header)
-        '''
+        print("\nFetching")
+        response = requests.get(url, headers = header)   
         cache[url] = response.text
-        '''
-        print (cache[url])
-        '''
         save_cache(cache)
 
         return cache[url]   
           
 
     else:
-        print("\nFetching Locations")
+        print("\nFetching")
         response = requests.get(url)
         cache[url] = response.text
         save_cache(cache)
@@ -217,7 +209,7 @@ def check_input(query, maximum, domain, action):
     return query
 
 
-def populate_counties_DB(state_short, birdkey=secrets.ebirdkey):
+def populate_counties_DB(state_short, birdkey=secrets_1.ebirdkey):
     '''Uses a state abreviation to query the Ebird API for data on the state's counties and adds the data to bird.sqlite.
 
     Uses an abbreviation of a state (state_short) to assemble a query to the "Get Region Info" endpoint of the Ebird API.
@@ -246,7 +238,6 @@ def populate_counties_DB(state_short, birdkey=secrets.ebirdkey):
 
         '''
 
-    print(birdkey)
     state_code = 'US-' + state_short
     url1 = 'https://api.ebird.org/v2/ref/region/list/subnational2/' + state_code
     header = {"X-eBirdApiToken": birdkey}
@@ -269,7 +260,7 @@ def populate_counties_DB(state_short, birdkey=secrets.ebirdkey):
     conn.close()
     pass
 
-def populate_sightings_DB(county_choice, state_short, birdkey= secrets.ebirdkey):
+def populate_sightings_DB(county_choice, state_short, birdkey= secrets_1.ebirdkey):
     '''Retrieves a county code and county name from bird.sqilte and uses the code to query sightings info and add it to bird.sqlite.
 
     Uses county_choice and state_short (a state abbreviation) to assemble a query to the sqlite database specified by
@@ -296,7 +287,6 @@ def populate_sightings_DB(county_choice, state_short, birdkey= secrets.ebirdkey)
     county_name: string
         The name of the county retrieved from the sqlite query.
         '''
-    print(birdkey)
     conn = sqlite3.connect(DB_NAME)
     cur = conn.cursor()
     result = cur.execute(
@@ -305,8 +295,6 @@ def populate_sightings_DB(county_choice, state_short, birdkey= secrets.ebirdkey)
     county_name = result[0][1]
     url = 'https://api.ebird.org/v2/data/obs/' + county_code + '/recent'
     header = {"X-eBirdApiToken": birdkey}
-    print('\nFetching County\n')
-    print (url)
     response = requests.get(url, headers = header)
     response_text = response.text
     sightings_json = json.loads(response_text)
@@ -339,7 +327,6 @@ def populate_sightings_DB(county_choice, state_short, birdkey= secrets.ebirdkey)
         pass
     conn.commit()
     conn.close()
-    print (county_name)
     return county_name
 
 def create_county_list(state_short, state_name):
@@ -403,7 +390,7 @@ def create_sightings_list(county_name):
         sighting_count = item[0]
     return int(sighting_count)
 
-def reverse_geocode(sighting_choice, county_name, liqkey=secrets.liqkey):
+def reverse_geocode(sighting_choice, county_name, liqkey=secrets_1.liqkey):
     '''Uses an integer that represents a bird sighting queried by the user, and the name of the county of the bird sighting, to return the address of the sighting.
 
     Uses an integer representing the bird sighting that the user chose to query (sighting_choice) and the name of a
@@ -524,9 +511,6 @@ def create_locations_chart(county_name):
     x_axis = []
     y_axis = []
 
-    print(result)    
-
-    
     for location in result:
         x_axis.append(int(location[4]))
         y_string = location[0] + '  |  ' + 'lat: ' + str(location[1]) + ' / ' + 'long: ' + str(location[2] + '    ')
@@ -699,7 +683,6 @@ if __name__ == "__main__":
                         exit()
                     else:
                         pass
-            print (state_short)
             populate_counties_DB(state_short)
             county_max = create_county_list(state_short, state)
             county_choice = input('\nSelect the integer of the county you would like to query, or "exit": ')
@@ -707,7 +690,6 @@ if __name__ == "__main__":
             county_name = populate_sightings_DB(county_choice, state_short)
             sighting_max = create_sightings_list(county_name)
             if sighting_max > 0:
-                print (county_name)
                 create_locations_chart(county_name)
                 create_sightings_scatterplot(county_name)
                 create_private_pie(county_name)
