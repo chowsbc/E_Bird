@@ -43,6 +43,6 @@ and the address of the sighting. These infographics will be opened in your defau
 
 
 CODE ATTRIBUTION FOR PLOTLY TABLE
-An exceptionally large amount of code for the function: "create_taxonomy_table" (lines 606-634) was copied verbatim from
+An exceptionally large amount of code for the function: "create_taxonomy_table" (lines 608-654) was copied verbatim from
 Plotly documentation and then tailored. Therefore, I provided an attribution.
 https://plotly.com/python/table/
